@@ -22,10 +22,9 @@ import Raven = require('raven');
 import packageJSON = require('../package.json');
 import { getBalenaSdk } from './utils/lazy';
 
-const getMixpanel = _.once<any>(() => {
-	const settings = require('balena-settings-client');
+const getMixpanel = _.once((balenaUrl: string) => {
 	return Mixpanel.init('balena-main', {
-		host: `api.${settings.get('balenaUrl')}`,
+		host: `api.${balenaUrl}`,
 		path: '/mixpanel',
 		protocol: 'https',
 	});
@@ -33,10 +32,11 @@ const getMixpanel = _.once<any>(() => {
 
 export function trackCommand(commandSignature: string) {
 	const balena = getBalenaSdk();
+	const balenaUrlPromise = balena.settings.get('balenaUrl');
 	return Promise.props({
-		balenaUrl: balena.settings.get('balenaUrl'),
+		balenaUrl: balenaUrlPromise,
 		username: balena.auth.whoami().catchReturn(undefined),
-		mixpanel: getMixpanel(),
+		mixpanel: balenaUrlPromise.then(getMixpanel),
 	})
 		.then(({ username, balenaUrl, mixpanel }) => {
 			Raven.mergeContext({
