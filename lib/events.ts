@@ -39,27 +39,25 @@ export function trackCommand(commandSignature: string) {
 		mixpanel: getMixpanel(),
 	})
 		.then(({ username, balenaUrl, mixpanel }) => {
-			return Promise.try(() => {
-				Raven.mergeContext({
-					user: {
-						id: username,
-						username,
-					},
-				});
-				// commandSignature is a string like, for example:
-				//     "push <applicationOrDevice>"
-				// That's literally so: "applicationOrDevice" is NOT replaced with
-				// the actual application ID or device ID. The purpose is find out the
-				// most / least used command verbs, so we can focus our development
-				// effort where it is most beneficial to end users.
-				return mixpanel.track(`[CLI] ${commandSignature}`, {
-					distinct_id: username,
-					version: packageJSON.version,
-					node: process.version,
-					arch: process.arch,
-					balenaUrl, // e.g. 'balena-cloud.com' or 'balena-staging.com'
-					platform: process.platform,
-				});
+			Raven.mergeContext({
+				user: {
+					id: username,
+					username,
+				},
+			});
+			// commandSignature is a string like, for example:
+			//     "push <applicationOrDevice>"
+			// That's literally so: "applicationOrDevice" is NOT replaced with
+			// the actual application ID or device ID. The purpose is find out the
+			// most / least used command verbs, so we can focus our development
+			// effort where it is most beneficial to end users.
+			return mixpanel.track(`[CLI] ${commandSignature}`, {
+				distinct_id: username,
+				version: packageJSON.version,
+				node: process.version,
+				arch: process.arch,
+				balenaUrl, // e.g. 'balena-cloud.com' or 'balena-staging.com'
+				platform: process.platform,
 			});
 		})
 		.timeout(100)
